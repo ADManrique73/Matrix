@@ -3,7 +3,7 @@
 #AsierDM 
 
  
-# Definir variables
+# Definir variables que se usarán en el script
 NOMBRE_VPC="vpc-AsierDM"
 CIDR_VPC="10.207.0.0/16"
 NOMBRE_SUBRED_PUBLICA="SubredPublica-Asier"
@@ -13,15 +13,15 @@ CIDR_SUBRED_PRIVADA="10.207.2.0/24"
 UBUNTU="ami-0c7217cdde317cfec"
 KEY_NAME="asier"
  
-# Crear VPC
+# Crear VPC del entorno
 vpcId=$(aws ec2 create-vpc --cidr-block $CIDR_VPC --output json | jq -r '.Vpc.VpcId')
 aws ec2 create-tags --resources $vpcId --tags Key=Name,Value=$NOMBRE_VPC
  
-# Crear subred pública
+# Crear subred pública 1
 subnetPublicaId=$(aws ec2 create-subnet --vpc-id $vpcId --cidr-block $CIDR_SUBRED_PUBLICA --availability-zone us-east-1a --output json | jq -r '.Subnet.SubnetId')
 aws ec2 create-tags --resources $subnetPublicaId --tags Key=Name,Value=$NOMBRE_SUBRED_PUBLICA
  
-# Crear subred privada
+# Crear subred privada 1
 subnetPrivadaId=$(aws ec2 create-subnet --vpc-id $vpcId --cidr-block $CIDR_SUBRED_PRIVADA --availability-zone us-east-1a --output json | jq -r '.Subnet.SubnetId')
 aws ec2 create-tags --resources $subnetPrivadaId --tags Key=Name,Value=$NOMBRE_SUBRED_PRIVADA
  
@@ -29,7 +29,7 @@ aws ec2 create-tags --resources $subnetPrivadaId --tags Key=Name,Value=$NOMBRE_S
 internetGatewayId=$(aws ec2 create-internet-gateway --output json | jq -r '.InternetGateway.InternetGatewayId')
 aws ec2 create-tags --resources $internetGatewayId --tags Key=Name,Value=${NOMBRE_VPC}-IG
  
-# Adjuntar Internet Gateway a la VPC
+# Adjuntar Internet Gateway a la VPC creada anteriormente
 aws ec2 attach-internet-gateway --vpc-id $vpcId --internet-gateway-id $internetGatewayId
  
 # Crear tabla de rutas pública
@@ -38,7 +38,7 @@ routeTablePublicId=$(aws ec2 create-route-table --vpc-id $vpcId --output json | 
 # Crear ruta para tráfico público
 aws ec2 create-route --route-table-id $routeTablePublicId --destination-cidr-block 0.0.0.0/0 --gateway-id $internetGatewayId
  
-# Asociar tabla de rutas pública a la subred pública
+# Asociar tabla de rutas pública a la subred pública 1
 aws ec2 associate-route-table --subnet-id $subnetPublicaId --route-table-id $routeTablePublicId
  
 #Crear Gateway NAT
@@ -58,7 +58,7 @@ aws ec2 create-route --route-table-id $routeTablePrivadaId --destination-cidr-bl
 # Asociar tabla de rutas privada a la subred privada
 aws ec2 associate-route-table --subnet-id $subnetPrivadaId --route-table-id $routeTablePrivadaId
  
-#Lanzar instancias (Ubuntu t2.micro) en la subred publica
+#Lanzar instancias (Ubuntu t2.micro) en la subred publica 1
 aws ec2 run-instances \
     --image-id $UBUNTU \
     --count 1 \
@@ -67,7 +67,7 @@ aws ec2 run-instances \
     --subnet-id $subnetPublicaId \
     --associate-public-ip-address
  
-#Lanzar instancias (Ubuntu t2.micro) en la subred privada
+#Lanzar instancias (Ubuntu t2.micro) en la subred privada 1
  
 aws ec2 run-instances \
     --image-id $UBUNTU \
